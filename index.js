@@ -121,7 +121,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: `[Gemini ${
-              model === "pro" ? "2.5 Pro" : "2.5 Flash"
+              model === "pro" ? "3 Pro" : "2.5 Flash"
             }]\n\n${text}`,
           },
         ],
