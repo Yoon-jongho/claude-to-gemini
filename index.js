@@ -101,7 +101,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // 모델 선택
       const modelName =
         model === "pro"
-          ? "gemini-3-pro-preview-11-2025" // Gemini 3 Pro (최신 모델, 2025년 11월 출시)
+          ? "gemini-3-pro-preview" // Gemini 3 Pro (최신 모델, 2025년 11월 출시)
           : "gemini-2.5-flash"; // 2.5 Flash (무료)
 
       const geminiModel = genAI.getGenerativeModel({ model: modelName });
