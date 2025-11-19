@@ -51,7 +51,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             model: {
               type: "string",
               description:
-                "Model to use: 'flash' (default, free, fast) or 'pro' (2.5 Pro, 1M tokens, better quality, paid)",
+                "Model to use: 'flash' (default, free, fast) or 'pro' (3 Pro, latest model, better quality, paid)",
               enum: ["flash", "pro"],
               default: "flash",
             },
@@ -101,7 +101,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // 모델 선택
       const modelName =
         model === "pro"
-          ? "gemini-3-pro" // 2.5 Pro (1M context, 유료) -> 3 pro 모델로 교체
+          ? "gemini-3-pro-preview-11-2025" // Gemini 3 Pro (최신 모델, 2025년 11월 출시)
           : "gemini-2.5-flash"; // 2.5 Flash (무료)
 
       const geminiModel = genAI.getGenerativeModel({ model: modelName });
@@ -121,7 +121,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: `[Gemini ${
-              model === "pro" ? "3 Pro" : "2.5 Flash"
+              model === "pro" ? "3.0 Pro" : "2.5 Flash"
             }]\n\n${text}`,
           },
         ],
