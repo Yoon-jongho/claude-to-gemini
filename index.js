@@ -86,6 +86,54 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["codebase"],
         },
       },
+      {
+        name: "generate_image_gemini",
+        description:
+          "Generate images using Gemini 2.5 Flash Image (Nano Banana). Best for contextual understanding, image editing, multi-image composition, and iterative refinement. Free tier available.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description:
+                "Description of the image to generate (in English, max 480 tokens)",
+            },
+            numberOfImages: {
+              type: "number",
+              description:
+                "Number of images to generate (1-4, default: 1)",
+              default: 1,
+              minimum: 1,
+              maximum: 4,
+            },
+          },
+          required: ["prompt"],
+        },
+      },
+      {
+        name: "generate_image_imagen",
+        description:
+          "Generate images using Imagen 3. Best for photorealistic quality, high-resolution outputs, and professional branding. Paid service ($0.03/image).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description:
+                "Description of the image to generate (in English, max 480 tokens)",
+            },
+            numberOfImages: {
+              type: "number",
+              description:
+                "Number of images to generate (1-4, default: 1)",
+              default: 1,
+              minimum: 1,
+              maximum: 4,
+            },
+          },
+          required: ["prompt"],
+        },
+      },
     ],
   };
 });
@@ -170,6 +218,73 @@ Provide:
             type: "text",
             text: `[Gemini Codebase Analysis - ${focus}]\n\n${response.text()}`,
           },
+        ],
+      };
+    }
+
+    if (name === "generate_image_gemini") {
+      const { prompt, numberOfImages = 1 } = args;
+
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash-image",
+      });
+
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["image"],
+        },
+      });
+
+      const response = await result.response;
+      const images = response.candidates?.[0]?.content?.parts?.filter(
+        (part) => part.inlineData
+      );
+
+      if (!images || images.length === 0) {
+        throw new Error("No images were generated");
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `[Gemini 2.5 Flash Image (Nano Banana)]\n\nGenerated ${images.length} image(s) for: "${prompt}"`,
+          },
+          ...images.map((img) => ({
+            type: "image",
+            data: img.inlineData.data,
+            mimeType: img.inlineData.mimeType,
+          })),
+        ],
+      };
+    }
+
+    if (name === "generate_image_imagen") {
+      const { prompt, numberOfImages = 1 } = args;
+
+      const model = genAI.getGenerativeModel({ model: "imagen-3.0-generate-002" });
+
+      const result = await model.generateImages({
+        prompt: prompt,
+        numberOfImages: numberOfImages,
+      });
+
+      if (!result.images || result.images.length === 0) {
+        throw new Error("No images were generated");
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `[Imagen 3]\n\nGenerated ${result.images.length} image(s) for: "${prompt}"\n\nNote: All images include SynthID watermark for authenticity.`,
+          },
+          ...result.images.map((img) => ({
+            type: "image",
+            data: img.data,
+            mimeType: img.mimeType || "image/png",
+          })),
         ],
       };
     }

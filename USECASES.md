@@ -7,8 +7,9 @@
 4. [유스케이스 2: 대규모 리팩토링](#유스케이스-2-대규모-리팩토링)
 5. [유스케이스 3: 프로젝트 온보딩](#유스케이스-3-프로젝트-온보딩)
 6. [유스케이스 4: 아키텍처 설계](#유스케이스-4-아키텍처-설계)
-7. [일일 루틴 예시](#일일-루틴-예시)
-8. [팁과 트릭](#팁과-트릭)
+7. [유스케이스 5: AI 이미지 생성](#유스케이스-5-ai-이미지-생성)
+8. [일일 루틴 예시](#일일-루틴-예시)
+9. [팁과 트릭](#팁과-트릭)
 
 ---
 
@@ -398,6 +399,195 @@ packages:
 
 ---
 
+## 유스케이스 5: AI 이미지 생성
+
+### 상황
+- **프로젝트**: 키오스크 UI/UX 개선
+- **요구사항**:
+  - 프로토타입 이미지 생성 (무료)
+  - 최종 배포용 고품질 이미지 (유료)
+- **작업**: 아이콘, 배경, 일러스트 제작
+
+### 시나리오 1: 빠른 프로토타입 (Nano Banana 🍌)
+
+**용도**: 디자인 아이디어 테스트, 목업 제작, 빠른 반복
+
+```
+Step 1: 초안 생성 (무료)
+────────────────────
+"generate_image_gemini 도구 사용:
+
+prompt: A minimalist icon of a coffee cup for a kiosk interface,
+simple geometric shapes, flat design, navy blue and white colors,
+clean lines, suitable for touch screen
+
+numberOfImages: 4"
+
+Step 2: 반복 개선 (대화형)
+────────────────────
+"앞에서 생성한 이미지 중 3번째가 마음에 드는데,
+좀 더 둥근 느낌으로 다시 생성해줘"
+
+Step 3: 다양한 스타일 테스트
+────────────────────
+"같은 커피 아이콘을
+1. 라인 아트 스타일
+2. 3D 스타일
+3. 손그림 스타일
+로 각각 생성해줘"
+```
+
+**실제 결과:**
+- ⏱️ 생성 시간: 즉시 (10초 이내)
+- 💰 비용: **무료** (토큰 기반)
+- 🔄 반복: 무제한 (대화형 편집)
+- ✅ 용도: 프로토타입, A/B 테스트
+
+### 시나리오 2: 최종 배포용 (Imagen 3)
+
+**용도**: 실제 제품 배포, 마케팅 자료, 고품질 출력
+
+```
+Step 1: 최종 이미지 생성 (유료)
+────────────────────
+"generate_image_imagen 도구 사용:
+
+prompt: Professional food photography of a latte with beautiful
+latte art, warm cafe lighting, shallow depth of field,
+high resolution, commercial quality, appealing composition
+
+numberOfImages: 4"
+
+Step 2: 베스트 선택
+────────────────────
+"4개 중 가장 좋은 걸로 고해상도 버전 1개 더 생성해줘
+좀 더 밝은 조명으로"
+```
+
+**실제 결과:**
+- ⏱️ 생성 시간: 10-15초
+- 💰 비용: **$0.03/이미지**
+- 📸 품질: 포토리얼리스틱
+- 🔒 보안: SynthID 워터마크 자동 포함
+- ✅ 용도: 실제 배포, 프린트, 광고
+
+### 시나리오 3: 프로젝트 문서 이미지
+
+**상황**: README, 발표 자료, 문서화 이미지 필요
+
+```
+Step 1: 다이어그램/일러스트 (Nano Banana)
+────────────────────
+"generate_image_gemini 도구 사용:
+
+prompt: Technical diagram showing a microservices architecture
+with API gateway, multiple services, and databases.
+Clean infographic style, blue and orange colors,
+white background, clear labels
+
+numberOfImages: 2"
+
+Step 2: 아이콘 세트 생성
+────────────────────
+"키오스크용 아이콘 세트 생성:
+1. Home icon
+2. Menu icon
+3. Cart icon
+4. User profile icon
+
+일관된 스타일로, 64x64px, 심플한 라인 아트"
+```
+
+**효과:**
+- ✅ 디자이너 없이 빠른 비주얼 제작
+- ✅ 문서화 품질 향상
+- ✅ 팀 커뮤니케이션 개선
+
+### 시나리오 4: 실전 워크플로우 (2단계 전략)
+
+**전략**: Nano Banana로 테스트 → Imagen으로 최종화
+
+```
+1단계: 아이디어 탐색 (Nano Banana - 무료)
+────────────────────
+"generate_image_gemini로
+배경 이미지 10가지 스타일 테스트
+- 미니멀
+- 따뜻한
+- 모던
+- 자연"
+
+2단계: 최종 선정 및 고품질 생성 (Imagen 3 - 유료)
+────────────────────
+"2번 스타일이 좋네!
+generate_image_imagen으로
+최종 배포용 고해상도 버전 생성"
+```
+
+**비용 최적화:**
+- 🟢 테스트 10회: $0 (Nano Banana)
+- 🔵 최종 1회: $0.03 (Imagen)
+- ✅ 총 비용: **$0.03** (vs 디자이너 외주 $50-100)
+
+### 실전 팁
+
+#### 1. 모델 선택 기준
+
+| 목적 | 모델 | 이유 |
+|------|------|------|
+| 프로토타입 | Nano Banana 🍌 | 무료, 빠른 반복 |
+| A/B 테스트 | Nano Banana 🍌 | 다양한 옵션 생성 |
+| 최종 배포 | Imagen 3 | 포토리얼리스틱 |
+| 문서화 | Nano Banana 🍌 | 충분한 품질 |
+| 마케팅 자료 | Imagen 3 | 전문가급 품질 |
+| 아이콘/로고 | Imagen 3 | 선명한 텍스트 |
+
+#### 2. 프롬프트 작성 팁
+
+**❌ 나쁜 예:**
+```
+"커피 이미지 만들어줘"
+```
+
+**✅ 좋은 예:**
+```
+"Professional food photography of espresso in white ceramic cup,
+top-down view, marble table, natural window lighting,
+high resolution, commercial quality, minimalist composition"
+```
+
+**핵심 요소:**
+- 📸 스타일: "professional photography", "flat design", "line art"
+- 🎨 색상: 구체적인 색상 명시
+- 💡 조명: "warm lighting", "dramatic shadows"
+- 📏 구도: "centered", "top-down view", "close-up"
+- 🎯 용도: "for kiosk", "icon", "background"
+
+#### 3. 반복 개선 패턴
+
+```
+1차: "기본 이미지 4개 생성"
+2차: "2번이 좋은데, 색상을 파란색으로"
+3차: "좀 더 밝게"
+4차: "완벽해! Imagen으로 최종 버전"
+```
+
+#### 4. 비용 관리
+
+```
+월 예상 사용:
+- Nano Banana: 무제한 (무료)
+- Imagen 3: 주 5-10개
+  → 월 $0.60-1.20
+
+vs 디자이너 외주:
+- 아이콘 세트: $100-200
+- 배경 이미지: $50-100
+- 총 절감: 월 $150-300
+```
+
+---
+
 ## 일일 루틴 예시
 
 ### 아침 루틴 (09:00-10:30) - 코드 리뷰
@@ -471,12 +661,23 @@ $ claude
 
 ### 2. 모델 선택 기준
 
+#### 텍스트/코드 생성
+
 | 상황 | 모델 | 이유 |
 |------|------|------|
 | 일반 코드 리뷰 | Flash | 무료, 충분히 빠름 |
-| 아키텍처 설계 | Pro | 복잡한 추론 필요 |
-| 보안 분석 | Pro | 정확도 중요 |
+| 아키텍처 설계 | Pro (Gemini 3) | 복잡한 추론 필요 |
+| 보안 분석 | Pro (Gemini 3) | 정확도 중요 |
 | 중복 코드 탐지 | Flash | 패턴 매칭 중심 |
+
+#### 이미지 생성
+
+| 상황 | 모델 | 이유 |
+|------|------|------|
+| 프로토타입/테스트 | Nano Banana 🍌 | 무료, 빠른 반복 |
+| 최종 배포 | Imagen 3 | 포토리얼리스틱 품질 |
+| 문서화/README | Nano Banana 🍌 | 충분한 품질 |
+| 마케팅/브랜딩 | Imagen 3 | 전문가급 품질 |
 
 ### 3. 변경 규모 자동 판단 스크립트
 
@@ -518,6 +719,8 @@ ask_gemini 도구 사용:
 
 ### 5. 비용 최적화
 
+#### 텍스트/코드 생성
+
 ```bash
 # Flash (무료) 우선 사용
 ask_gemini → 기본적으로 Flash
@@ -529,7 +732,22 @@ ask_gemini → 기본적으로 Flash
 
 # 월 예상 비용
 Flash: $0 (무료)
-Pro: 주 1-2회 사용 → 월 $5-10
+Pro (Gemini 3): 주 1-2회 사용 → 월 $5-10
+```
+
+#### 이미지 생성
+
+```bash
+# 2단계 전략 (테스트 → 최종화)
+1. Nano Banana로 무제한 테스트 (무료)
+2. 최종 1-2개만 Imagen으로 생성
+
+# 월 예상 비용
+Nano Banana: 무제한 (무료)
+Imagen 3: 주 5-10개 → 월 $0.60-1.20
+
+# 총 절감 효과
+디자이너 외주 대비: 월 $150-300 절감
 ```
 
 ### 6. 일반적인 실수

@@ -5,19 +5,19 @@ Claude Code에서 Google Gemini를 MCP(Model Context Protocol) 서버로 사용�
 ## 🎯 프로젝트 목적
 
 - **Claude Code**: 메인 AI (일반 코딩, 디버깅, 파일 생성/수정)
-- **Gemini 2.5**: 서브 AI (대규모 컨텍스트 분석, 전체 코드베이스 리뷰)
+- **Gemini**: 서브 AI (대규모 컨텍스트 분석, 코드베이스 리뷰, 이미지 생성)
 
 ## ✨ 주요 기능
 
-### 1. `ask_gemini`
+### 1. `ask_gemini` - 텍스트/코드 생성
 
 - **용도**: 일반 Gemini 호출, 큰 컨텍스트 분석
 - **모델 선택**:
   - `flash` (기본): Gemini 2.5 Flash - 무료, 빠름
-  - `pro`: Gemini 2.5 Pro - 유료, 최고 성능
+  - `pro`: **Gemini 3 Pro** - 최신 모델 (2025.11 출시), 최고 성능
 - **컨텍스트**: 최대 1M 토큰
 
-### 2. `gemini_analyze_codebase`
+### 2. `gemini_analyze_codebase` - 코드베이스 분석
 
 - **용도**: 전체 코드베이스 전문 분석
 - **분석 타입**:
@@ -26,6 +26,31 @@ Claude Code에서 Google Gemini를 MCP(Model Context Protocol) 서버로 사용�
   - `security`: 보안 취약점 검사
   - `performance`: 성능 최적화 기회
   - `general`: 종합 분석
+
+### 3. `generate_image_gemini` - 이미지 생성 (Nano Banana 🍌)
+
+- **용도**: AI 이미지 생성 (Gemini 2.5 Flash Image)
+- **특징**:
+  - 맥락 이해 및 대화형 편집
+  - 이미지 편집 (요소 추가/제거)
+  - 다중 이미지 합성
+  - **무료 티어 제공** (토큰 기반)
+- **파라미터**:
+  - `prompt`: 이미지 설명 (영문, 최대 480 토큰)
+  - `numberOfImages`: 생성 개수 (1-4, 기본값: 1)
+
+### 4. `generate_image_imagen` - 이미지 생성 (Imagen 3)
+
+- **용도**: 최고 품질 AI 이미지 생성
+- **특징**:
+  - 포토리얼리스틱 품질
+  - 고해상도 출력
+  - 선명한 텍스트 렌더링
+  - SynthID 워터마크 자동 포함
+- **가격**: $0.03/이미지
+- **파라미터**:
+  - `prompt`: 이미지 설명 (영문, 최대 480 토큰)
+  - `numberOfImages`: 생성 개수 (1-4, 기본값: 1)
 
 ## 🛠 기술 스택
 
@@ -106,6 +131,19 @@ ask_gemini 도구를 사용해서 model을 "pro"로 설정하고 "복잡한 아�
 gemini_analyze_codebase 도구로 보안 취약점을 찾아줘
 ```
 
+### 이미지 생성 (무료 - Nano Banana)
+
+```
+generate_image_gemini 도구로 "A futuristic robot coding in a cyberpunk city" 이미지 생성해줘
+```
+
+### 이미지 생성 (고품질 - Imagen 3)
+
+```
+generate_image_imagen 도구로 numberOfImages를 4로 설정하고
+"Professional headshot of a software engineer" 이미지 4개 생성해줘
+```
+
 ## 💡 사용 시나리오
 
 ### 시나리오 1: 새 프로젝트 아키텍처 설계
@@ -144,10 +182,19 @@ ask_gemini 도구로 이 프로젝트 전체를 읽고
 
 ## 📊 모델 비교
 
+### 텍스트/코드 생성 모델
+
 | 모델             | 컨텍스트 | 비용 | 속도 | 추천 용도                |
 | ---------------- | -------- | ---- | ---- | ------------------------ |
 | Gemini 2.5 Flash | 1M 토큰  | 무료 | 빠름 | 일반 분석, 대부분의 작업 |
-| Gemini 2.5 Pro   | 1M 토큰  | 유료 | 보통 | 복잡한 추론, 중요한 설계 |
+| **Gemini 3 Pro** | 1M 토큰  | 유료 | 빠름 | 최고 성능, 복잡한 추론   |
+
+### 이미지 생성 모델
+
+| 모델                         | 용도                     | 비용            | 특징                         |
+| ---------------------------- | ------------------------ | --------------- | ---------------------------- |
+| Gemini 2.5 Flash Image (🍌) | 대화형 편집, 다목적 생성 | 무료 (토큰 기반) | 맥락 이해, 이미지 편집 가능   |
+| Imagen 3                     | 고품질 사진, 브랜딩      | $0.03/이미지    | 포토리얼리스틱, SynthID 포함 |
 
 ## ⚠️ 보안 주의사항
 
