@@ -101,7 +101,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // 모델 선택
       const modelName =
         model === "pro"
-          ? "gemini-2.5-pro" // 2.5 Pro (1M context, 유료)
+          ? "gemini-3-pro" // 2.5 Pro (1M context, 유료) -> 3 pro 모델로 교체
           : "gemini-2.5-flash"; // 2.5 Flash (무료)
 
       const geminiModel = genAI.getGenerativeModel({ model: modelName });
