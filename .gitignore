@@ -25,3 +25,5 @@ yarn-error.log*
 # 로그 파일
 *.log
 logs/
+
+generated_images

@@ -5,6 +5,12 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { writeFile, mkdir } from "fs/promises";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Gemini API 초기화
 const apiKey = process.env.GEMINI_API_KEY;
@@ -113,7 +119,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "generate_image_imagen",
         description:
-          "Generate images using Imagen 3. Best for photorealistic quality, high-resolution outputs, and professional branding. Paid service ($0.03/image).",
+          "Generate images using Imagen 4. Best for photorealistic quality, high-resolution outputs, and professional branding. Paid service.",
         inputSchema: {
           type: "object",
           properties: {
@@ -245,11 +251,29 @@ Provide:
         throw new Error("No images were generated");
       }
 
+      // 이미지 저장
+      const outputDir = join(__dirname, "generated_images");
+      await mkdir(outputDir, { recursive: true });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const savedPaths = [];
+
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
+        const ext = img.inlineData.mimeType.split("/")[1] || "png";
+        const filename = `gemini_${timestamp}_${i + 1}.${ext}`;
+        const filepath = join(outputDir, filename);
+
+        const buffer = Buffer.from(img.inlineData.data, "base64");
+        await writeFile(filepath, buffer);
+        savedPaths.push(filepath);
+      }
+
       return {
         content: [
           {
             type: "text",
-            text: `[Gemini 2.5 Flash Image (Nano Banana)]\n\nGenerated ${images.length} image(s) for: "${prompt}"`,
+            text: `[Gemini 2.5 Flash Image (Nano Banana)]\n\nGenerated ${images.length} image(s) for: "${prompt}"\n\nSaved to:\n${savedPaths.map(p => `- ${p}`).join("\n")}`,
           },
           ...images.map((img) => ({
             type: "image",
@@ -263,26 +287,63 @@ Provide:
     if (name === "generate_image_imagen") {
       const { prompt, numberOfImages = 1 } = args;
 
-      const model = genAI.getGenerativeModel({ model: "imagen-3.0-generate-002" });
+      // REST API를 사용하여 Imagen 4 호출
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict`,
+        {
+          method: "POST",
+          headers: {
+            "x-goog-api-key": apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            instances: [{ prompt: prompt }],
+            parameters: {
+              sampleCount: numberOfImages,
+            },
+          }),
+        }
+      );
 
-      const result = await model.generateImages({
-        prompt: prompt,
-        numberOfImages: numberOfImages,
-      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Imagen API error: ${response.status} - ${errorText}`);
+      }
 
-      if (!result.images || result.images.length === 0) {
-        throw new Error("No images were generated");
+      const result = await response.json();
+
+      // predictions 배열 확인 (실제 API 응답 구조)
+      if (!result.predictions || result.predictions.length === 0) {
+        throw new Error(`No images were generated. Response: ${JSON.stringify(result)}`);
+      }
+
+      // 이미지 저장
+      const outputDir = join(__dirname, "generated_images");
+      await mkdir(outputDir, { recursive: true });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const savedPaths = [];
+
+      for (let i = 0; i < result.predictions.length; i++) {
+        const img = result.predictions[i];
+        const filename = `imagen_${timestamp}_${i + 1}.png`;
+        const filepath = join(outputDir, filename);
+
+        // bytesBase64Encoded 필드 사용
+        const buffer = Buffer.from(img.bytesBase64Encoded, "base64");
+        await writeFile(filepath, buffer);
+        savedPaths.push(filepath);
       }
 
       return {
         content: [
           {
             type: "text",
-            text: `[Imagen 3]\n\nGenerated ${result.images.length} image(s) for: "${prompt}"\n\nNote: All images include SynthID watermark for authenticity.`,
+            text: `[Imagen 4]\n\nGenerated ${result.predictions.length} image(s) for: "${prompt}"\n\nSaved to:\n${savedPaths.map(p => `- ${p}`).join("\n")}\n\nNote: All images include SynthID watermark for authenticity.`,
           },
-          ...result.images.map((img) => ({
+          ...result.predictions.map((img) => ({
             type: "image",
-            data: img.data,
+            data: img.bytesBase64Encoded,
             mimeType: img.mimeType || "image/png",
           })),
         ],
