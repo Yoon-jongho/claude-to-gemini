@@ -93,9 +93,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "generate_image_gemini",
+        name: "generate_image_nano_banana",
         description:
-          "Generate images using Gemini 2.5 Flash Image (Nano Banana). Best for contextual understanding, image editing, multi-image composition, and iterative refinement. Free tier available.",
+          "Generate images using Gemini 3.1 Flash Image (Nano Banana). Best for contextual understanding, image editing, multi-image composition, and iterative refinement. Free tier available.",
         inputSchema: {
           type: "object",
           properties: {
@@ -228,11 +228,11 @@ Provide:
       };
     }
 
-    if (name === "generate_image_gemini") {
+    if (name === "generate_image_nano_banana") {
       const { prompt, numberOfImages = 1 } = args;
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash-image",
+        model: "gemini-3.1-flash-image-preview",
       });
 
       const result = await model.generateContent({
@@ -273,7 +273,7 @@ Provide:
         content: [
           {
             type: "text",
-            text: `[Gemini 2.5 Flash Image (Nano Banana)]\n\nGenerated ${images.length} image(s) for: "${prompt}"\n\nSaved to:\n${savedPaths.map(p => `- ${p}`).join("\n")}`,
+            text: `[Gemini 3.1 Flash Image (Nano Banana)]\n\nGenerated ${images.length} image(s) for: "${prompt}"\n\nSaved to:\n${savedPaths.map(p => `- ${p}`).join("\n")}`,
           },
           ...images.map((img) => ({
             type: "image",
