@@ -7,7 +7,7 @@
 4. [유스케이스 2: 대규모 리팩토링](#유스케이스-2-대규모-리팩토링)
 5. [유스케이스 3: 프로젝트 온보딩](#유스케이스-3-프로젝트-온보딩)
 6. [유스케이스 4: 아키텍처 설계](#유스케이스-4-아키텍처-설계)
-7. [유스케이스 5: AI 이미지 생성](#유스케이스-5-ai-이미지-생성)
+7. [유스케이스 5: AI 이미지 생성 (용도별 6개 도구)](#유스케이스-5-ai-이미지-생성-용도별-6개-도구)
 8. [일일 루틴 예시](#일일-루틴-예시)
 9. [팁과 트릭](#팁과-트릭)
 
@@ -399,148 +399,285 @@ packages:
 
 ---
 
-## 유스케이스 5: AI 이미지 생성
+## 유스케이스 5: AI 이미지 생성 (용도별 6개 도구)
 
 ### 상황
-- **프로젝트**: 키오스크 UI/UX 개선
-- **요구사항**:
-  - 프로토타입 이미지 생성 (무료)
-  - 최종 배포용 고품질 이미지 (유료)
-- **작업**: 아이콘, 배경, 일러스트 제작
+- **프로젝트**: 키오스크 UI/UX 개선 + 마케팅
+- **요구사항**: 용도에 맞는 최적 모델 자동 선택
+- **도구 구성**: 6개 전문 도구 (로고, 삽화, 인포그래픽, 사진, 배너, 편집)
 
-### 시나리오 1: 빠른 프로토타입 (Nano Banana 🍌)
+### 도구별 모델 매핑
 
-**용도**: 디자인 아이디어 테스트, 목업 제작, 빠른 반복
+| 도구 | 모델 | 비용 | 핵심 강점 |
+|------|------|------|-----------|
+| `generate_logo` | Nano Banana Pro | 유료 | 전문 에셋, 스케일러블 |
+| `generate_illustration` | Nano Banana 2 | **무료** | 빠른 생성, 다양한 화풍 |
+| `generate_infographic` | Nano Banana Pro | 유료 | 텍스트 렌더링, 사고 모드 |
+| `generate_photo` | Imagen 4 | 유료 | 최고 사실적 품질, 4K |
+| `generate_banner` | Nano Banana Pro | 유료 | 텍스트+그래픽, 플랫폼 프리셋 |
+| `edit_image` | Nano Banana 2 | **무료** | 인터리브 편집, 요소 추가/삭제 |
+
+---
+
+### 시나리오 1: 브랜드 로고 제작 (`generate_logo`)
+
+**상황**: 새 키오스크 브랜드 로고가 필요
 
 ```
-Step 1: 초안 생성 (무료)
+Step 1: 스타일별 로고 탐색
 ────────────────────
-"generate_image_gemini 도구 사용:
+"generate_logo 도구 사용:
 
-prompt: A minimalist icon of a coffee cup for a kiosk interface,
-simple geometric shapes, flat design, navy blue and white colors,
-clean lines, suitable for touch screen
+prompt: A coffee cup combined with a kiosk screen shape
+brandName: CafeKiosk
+style: modern
+colorScheme: navy blue and gold"
 
+Step 2: 다른 스타일로 비교
+────────────────────
+"같은 로고를 style을 'minimal'로 변경해서 다시 생성해줘"
+
+Step 3: 변형 확장
+────────────────────
+"2번이 좋아! 같은 컨셉으로
+1. 앱 아이콘 버전 (심플하게)
+2. 가로형 로고 (텍스트 옆에 아이콘)
+두 가지 생성해줘"
+```
+
+**효과:**
+- ⏱️ 생성 시간: 15-20초
+- 🎯 전문 애셋 제작에 최적화된 Nano Banana Pro 자동 사용
+- ✅ 용도: 브랜딩, 앱 아이콘, 명함, 간판
+
+---
+
+### 시나리오 2: 삽화/일러스트 제작 (`generate_illustration`)
+
+**상황**: 키오스크 온보딩 화면에 들어갈 일러스트 필요
+
+```
+Step 1: 다양한 화풍 테스트 (무료)
+────────────────────
+"generate_illustration 도구 사용:
+
+prompt: A friendly barista welcoming customers at a modern cafe
+style: watercolor
+mood: cheerful
+aspectRatio: 16:9
 numberOfImages: 4"
 
-Step 2: 반복 개선 (대화형)
+Step 2: 스타일 변경 비교
 ────────────────────
-"앞에서 생성한 이미지 중 3번째가 마음에 드는데,
-좀 더 둥근 느낌으로 다시 생성해줘"
+"같은 장면을 style을 'cartoon'으로 바꿔서 4개 더 생성해줘"
 
-Step 3: 다양한 스타일 테스트
+Step 3: 시리즈 제작
 ────────────────────
-"같은 커피 아이콘을
-1. 라인 아트 스타일
-2. 3D 스타일
-3. 손그림 스타일
-로 각각 생성해줘"
+"watercolor 스타일로 확정!
+키오스크 사용 단계별 일러스트 3개 생성:
+1. 메뉴 선택하는 장면
+2. 결제하는 장면
+3. 음료 받는 장면"
 ```
 
-**실제 결과:**
-- ⏱️ 생성 시간: 즉시 (10초 이내)
-- 💰 비용: **무료** (토큰 기반)
-- 🔄 반복: 무제한 (대화형 편집)
-- ✅ 용도: 프로토타입, A/B 테스트
+**효과:**
+- ⏱️ 생성 시간: 10초 이내
+- 💰 비용: **무료** (Nano Banana 2)
+- 🔄 무제한 반복 가능
+- ✅ 용도: 프로토타입, 온보딩, 가이드, A/B 테스트
 
-### 시나리오 2: 최종 배포용 (Imagen 3)
+---
 
-**용도**: 실제 제품 배포, 마케팅 자료, 고품질 출력
+### 시나리오 3: 인포그래픽/다이어그램 제작 (`generate_infographic`)
+
+**상황**: README, 발표 자료, 기술 문서에 다이어그램 필요
 
 ```
-Step 1: 최종 이미지 생성 (유료)
+Step 1: 아키텍처 다이어그램
 ────────────────────
-"generate_image_imagen 도구 사용:
+"generate_infographic 도구 사용:
+
+prompt: Microservices architecture diagram showing
+API Gateway, Auth Service, Order Service, Payment Service,
+and PostgreSQL database connections
+type: diagram
+aspectRatio: 16:9"
+
+Step 2: 플로우차트
+────────────────────
+"generate_infographic 도구 사용:
+
+prompt: User checkout flow from cart review to payment
+confirmation with decision points for coupon and membership
+type: flowchart
+aspectRatio: 1:2"
+
+Step 3: 통계 인포그래픽
+────────────────────
+"generate_infographic 도구 사용:
+
+prompt: Monthly kiosk usage statistics infographic
+data: Orders: 12,500 / Peak hour: 12-1PM / Top menu: Americano 35%,
+Latte 28%, Tea 15% / Avg transaction: $4.50
+type: stats
+aspectRatio: 1:4"
+```
+
+**효과:**
+- 🧠 사고 모드로 복잡한 정보 구조 추론
+- 📝 텍스트 렌더링 최적화 (읽기 쉬운 라벨)
+- ✅ 용도: 기술 문서, 발표 자료, 팀 커뮤니케이션
+
+---
+
+### 시나리오 4: 고품질 사진 생성 (`generate_photo`)
+
+**상황**: 키오스크 메뉴판에 들어갈 실제 음식 사진 필요
+
+```
+Step 1: 제품 사진 생성 (유료)
+────────────────────
+"generate_photo 도구 사용:
 
 prompt: Professional food photography of a latte with beautiful
 latte art, warm cafe lighting, shallow depth of field,
 high resolution, commercial quality, appealing composition
-
+style: studio
 numberOfImages: 4"
 
-Step 2: 베스트 선택
+Step 2: 다른 앵글/스타일
 ────────────────────
-"4개 중 가장 좋은 걸로 고해상도 버전 1개 더 생성해줘
-좀 더 밝은 조명으로"
-```
-
-**실제 결과:**
-- ⏱️ 생성 시간: 10-15초
-- 💰 비용: **$0.03/이미지**
-- 📸 품질: 포토리얼리스틱
-- 🔒 보안: SynthID 워터마크 자동 포함
-- ✅ 용도: 실제 배포, 프린트, 광고
-
-### 시나리오 3: 프로젝트 문서 이미지
-
-**상황**: README, 발표 자료, 문서화 이미지 필요
-
-```
-Step 1: 다이어그램/일러스트 (Nano Banana)
-────────────────────
-"generate_image_gemini 도구 사용:
-
-prompt: Technical diagram showing a microservices architecture
-with API gateway, multiple services, and databases.
-Clean infographic style, blue and orange colors,
-white background, clear labels
-
-numberOfImages: 2"
-
-Step 2: 아이콘 세트 생성
-────────────────────
-"키오스크용 아이콘 세트 생성:
-1. Home icon
-2. Menu icon
-3. Cart icon
-4. User profile icon
-
-일관된 스타일로, 64x64px, 심플한 라인 아트"
+"같은 라떼를 style을 'cinematic'으로,
+top-down view 구도로 생성해줘"
 ```
 
 **효과:**
-- ✅ 디자이너 없이 빠른 비주얼 제작
-- ✅ 문서화 품질 향상
-- ✅ 팀 커뮤니케이션 개선
+- ⏱️ 생성 시간: 10-15초
+- 💰 비용: 유료 (Imagen 4)
+- 📸 품질: 포토리얼리스틱 (최대 4K)
+- 🔒 SynthID 워터마크 자동 포함
+- ✅ 용도: 실제 배포, 메뉴판, 광고, 프린트
 
-### 시나리오 4: 실전 워크플로우 (2단계 전략)
+---
 
-**전략**: Nano Banana로 테스트 → Imagen으로 최종화
+### 시나리오 5: 마케팅 배너/SNS 제작 (`generate_banner`)
+
+**상황**: SNS 프로모션 이미지 급하게 필요
 
 ```
-1단계: 아이디어 탐색 (Nano Banana - 무료)
+Step 1: Instagram 포스트
 ────────────────────
-"generate_image_gemini로
-배경 이미지 10가지 스타일 테스트
-- 미니멀
-- 따뜻한
-- 모던
-- 자연"
+"generate_banner 도구 사용:
 
-2단계: 최종 선정 및 고품질 생성 (Imagen 3 - 유료)
+prompt: Bright modern cafe promotion with coffee beans
+and warm colors, inviting atmosphere
+text: Grand Opening 50% OFF
+platform: instagram"
+
+Step 2: Facebook 커버
 ────────────────────
-"2번 스타일이 좋네!
-generate_image_imagen으로
-최종 배포용 고해상도 버전 생성"
+"같은 컨셉으로 platform을 'facebook'으로 바꿔서
+Facebook 커버 사이즈로 생성해줘"
+
+Step 3: YouTube 썸네일
+────────────────────
+"generate_banner 도구 사용:
+
+prompt: Eye-catching kiosk demo video thumbnail,
+tech and coffee fusion concept
+text: How Our Kiosk Works
+platform: youtube"
+```
+
+**효과:**
+- 📐 플랫폼별 최적 사이즈 자동 적용
+- 📝 텍스트 + 그래픽 조합 최적화
+- ✅ 용도: SNS 마케팅, 프로모션, 광고 배너
+
+---
+
+### 시나리오 6: 이미지 편집/수정 (`edit_image`)
+
+**상황**: 기존 이미지를 수정해야 할 때
+
+```
+Step 1: 배경 요소 제거 (무료)
+────────────────────
+"edit_image 도구 사용:
+
+prompt: Remove the background people and keep only the coffee cup
+imagePath: ./generated_images/photo_001.png
+action: remove"
+
+Step 2: 요소 추가
+────────────────────
+"edit_image 도구 사용:
+
+prompt: Add a small CafeKiosk logo watermark in the bottom right corner
+imagePath: ./generated_images/photo_001_edited.png
+action: add"
+
+Step 3: 스타일 변환
+────────────────────
+"edit_image 도구 사용:
+
+prompt: Convert this photo into a watercolor painting style
+imagePath: ./generated_images/photo_001.png
+action: style_transfer"
+```
+
+**효과:**
+- 💰 비용: **무료** (Nano Banana 2)
+- 🔄 대화형 반복 수정 가능
+- ✅ 용도: 후보정, 배경 제거, 스타일 변환, 요소 추가/삭제
+
+---
+
+### 시나리오 7: 실전 워크플로우 (다중 도구 조합)
+
+**전략**: 무료 도구로 탐색 → 전문 도구로 확정 → 편집으로 마무리
+
+```
+1단계: 컨셉 탐색 (generate_illustration - 무료)
+────────────────────
+"삽화 스타일로 키오스크 배경 이미지 10가지 테스트
+- 미니멀 / 따뜻한 / 모던 / 자연"
+
+2단계: 최종 사진 생성 (generate_photo - 유료)
+────────────────────
+"2번 컨셉이 좋네!
+사실적 사진 스타일로 최종 배포용 생성"
+
+3단계: 배너 제작 (generate_banner)
+────────────────────
+"완성된 이미지 컨셉으로
+Instagram, Facebook 프로모션 배너 제작"
+
+4단계: 후보정 (edit_image - 무료)
+────────────────────
+"배너에 프로모션 텍스트 위치 조정"
 ```
 
 **비용 최적화:**
-- 🟢 테스트 10회: $0 (Nano Banana)
-- 🔵 최종 1회: $0.03 (Imagen)
-- ✅ 총 비용: **$0.03** (vs 디자이너 외주 $50-100)
+- 🟢 컨셉 탐색 10회: $0 (`generate_illustration` - 무료)
+- 🔵 최종 사진 1회: 유료 (`generate_photo`)
+- 🟡 배너 2회: 유료 (`generate_banner`)
+- 🟢 후보정 3회: $0 (`edit_image` - 무료)
+
+---
 
 ### 실전 팁
 
-#### 1. 모델 선택 기준
+#### 1. 도구 선택 가이드
 
-| 목적 | 모델 | 이유 |
+| 목적 | 도구 | 이유 |
 |------|------|------|
-| 프로토타입 | Nano Banana 🍌 | 무료, 빠른 반복 |
-| A/B 테스트 | Nano Banana 🍌 | 다양한 옵션 생성 |
-| 최종 배포 | Imagen 3 | 포토리얼리스틱 |
-| 문서화 | Nano Banana 🍌 | 충분한 품질 |
-| 마케팅 자료 | Imagen 3 | 전문가급 품질 |
-| 아이콘/로고 | Imagen 3 | 선명한 텍스트 |
+| 브랜드 로고/아이콘 | `generate_logo` | 스케일러블, 전문 에셋 |
+| 프로토타입/목업 | `generate_illustration` | 무료, 빠른 반복 |
+| 기술 문서/발표 자료 | `generate_infographic` | 텍스트 렌더링, 정보 구조화 |
+| 실제 배포/광고 사진 | `generate_photo` | 포토리얼리스틱, 4K |
+| SNS/마케팅 배너 | `generate_banner` | 플랫폼별 프리셋 |
+| 기존 이미지 수정 | `edit_image` | 무료, 요소 추가/삭제 |
 
 #### 2. 프롬프트 작성 팁
 
@@ -563,27 +700,23 @@ high resolution, commercial quality, minimalist composition"
 - 📏 구도: "centered", "top-down view", "close-up"
 - 🎯 용도: "for kiosk", "icon", "background"
 
-#### 3. 반복 개선 패턴
+#### 3. 비용 최적화 전략
 
 ```
-1차: "기본 이미지 4개 생성"
-2차: "2번이 좋은데, 색상을 파란색으로"
-3차: "좀 더 밝게"
-4차: "완벽해! Imagen으로 최종 버전"
-```
+무료 도구 최대 활용:
+- generate_illustration: 컨셉 탐색, 프로토타입, 문서 삽화
+- edit_image: 후보정, 배경 제거, 스타일 변환
 
-#### 4. 비용 관리
+유료 도구는 최종 결과물에만:
+- generate_logo: 확정된 브랜드 로고
+- generate_infographic: 최종 발표 자료
+- generate_photo: 배포용 사진
+- generate_banner: 실제 마케팅 배너
 
-```
-월 예상 사용:
-- Nano Banana: 무제한 (무료)
-- Imagen 3: 주 5-10개
-  → 월 $0.60-1.20
-
-vs 디자이너 외주:
-- 아이콘 세트: $100-200
-- 배경 이미지: $50-100
-- 총 절감: 월 $150-300
+월 예상 비용:
+- 무료 (illustration + edit): 무제한
+- 유료 (logo + infographic + banner): Nano Banana Pro 사용량 기반
+- 유료 (photo): Imagen 4 사용량 기반
 ```
 
 ---
@@ -672,12 +805,14 @@ $ claude
 
 #### 이미지 생성
 
-| 상황 | 모델 | 이유 |
-|------|------|------|
-| 프로토타입/테스트 | Nano Banana 🍌 | 무료, 빠른 반복 |
-| 최종 배포 | Imagen 3 | 포토리얼리스틱 품질 |
-| 문서화/README | Nano Banana 🍌 | 충분한 품질 |
-| 마케팅/브랜딩 | Imagen 3 | 전문가급 품질 |
+| 상황 | 도구 | 모델 | 이유 |
+|------|------|------|------|
+| 로고/아이콘 | `generate_logo` | Nano Banana Pro | 전문 에셋 제작 특화 |
+| 프로토타입/삽화 | `generate_illustration` | Nano Banana 2 | 무료, 빠른 반복 |
+| 기술 문서/다이어그램 | `generate_infographic` | Nano Banana Pro | 텍스트 렌더링 + 사고 모드 |
+| 실제 배포/광고 사진 | `generate_photo` | Imagen 4 | 포토리얼리스틱, 4K |
+| SNS/마케팅 배너 | `generate_banner` | Nano Banana Pro | 플랫폼 프리셋, 텍스트 조합 |
+| 이미지 후보정 | `edit_image` | Nano Banana 2 | 무료, 대화형 편집 |
 
 ### 3. 변경 규모 자동 판단 스크립트
 
@@ -738,13 +873,15 @@ Pro (Gemini 3): 주 1-2회 사용 → 월 $5-10
 #### 이미지 생성
 
 ```bash
-# 2단계 전략 (테스트 → 최종화)
-1. Nano Banana로 무제한 테스트 (무료)
-2. 최종 1-2개만 Imagen으로 생성
+# 3단계 전략 (탐색 → 제작 → 후보정)
+1. generate_illustration로 컨셉 탐색 (무료)
+2. 용도별 전문 도구로 최종 제작 (logo/infographic/photo/banner)
+3. edit_image로 후보정 (무료)
 
 # 월 예상 비용
-Nano Banana: 무제한 (무료)
-Imagen 3: 주 5-10개 → 월 $0.60-1.20
+무료 도구 (illustration + edit): 무제한
+유료 도구 (logo + infographic + banner): Nano Banana Pro 사용량 기반
+유료 도구 (photo): Imagen 4 사용량 기반
 
 # 총 절감 효과
 디자이너 외주 대비: 월 $150-300 절감
