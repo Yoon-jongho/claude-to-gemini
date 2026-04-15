@@ -194,7 +194,7 @@ async function generateWithNanoBanana(
     responseModalities: ["image", "text"],
   };
   if (imageConfig) {
-    Object.assign(generationConfig, imageConfig);
+    generationConfig.imageConfig = imageConfig;
   }
 
   const result = await model.generateContent({
