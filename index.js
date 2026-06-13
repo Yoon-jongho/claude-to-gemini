@@ -29,7 +29,7 @@ const MODELS = {
   NANO_BANANA_PRO: "gemini-3-pro-image-preview",
   NANO_BANANA_2: "gemini-3.1-flash-image-preview",
   IMAGEN_4: "imagen-4.0-generate-001",
-  FLASH: "gemini-2.5-flash",
+  FLASH: "gemini-3.5-flash",
   PRO: "gemini-3.1-pro-preview",
 };
 
@@ -285,7 +285,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             model: {
               type: "string",
               description:
-                "Model to use: 'flash' (default, free, fast) or 'pro' (3.1 Pro, latest model, better quality, paid)",
+                "Model to use: 'flash' (default, fast) or 'pro' (3.1 Pro, better quality)",
               enum: ["flash", "pro"],
               default: "flash",
             },
@@ -584,7 +584,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: `[Gemini ${model === "pro" ? "3.1 Pro" : "2.5 Flash"}]\n\n${text}`,
+            text: `[Gemini ${model === "pro" ? "3.1 Pro" : "3.5 Flash"}]\n\n${text}`,
           },
         ],
       };
