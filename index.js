@@ -31,6 +31,10 @@ const MODELS = {
   IMAGEN_4: "imagen-4.0-generate-001",
   FLASH: "gemini-3.5-flash",
   PRO: "gemini-3.1-pro-preview",
+  VEO_3_1: "veo-3.1-generate-preview",
+  VEO_3_1_FAST: "veo-3.1-fast-generate-preview",
+  VEO_3_1_LITE: "veo-3.1-lite-generate-preview",
+  OMNI_FLASH: "gemini-omni-1.1-flash",
 };
 
 const PLATFORM_PRESETS = {
@@ -205,6 +209,176 @@ async function generateWithNanoBanana(
   return extractImages(result.response);
 }
 
+async function saveVideo(videoData, prefix) {
+  const outputDir = join(__dirname, "generated_videos");
+  await mkdir(outputDir, { recursive: true });
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const filename = `${prefix}_${timestamp}.mp4`;
+  const filepath = join(outputDir, filename);
+
+  await writeFile(filepath, Buffer.from(videoData, "base64"));
+  return filepath;
+}
+
+async function generateWithVeo(prompt, modelName, parameters, imagePath) {
+  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+
+  const instance = { prompt };
+  if (imagePath) {
+    const imageBuffer = await readFile(imagePath);
+    const base64Data = imageBuffer.toString("base64");
+    const ext = imagePath.split(".").pop().toLowerCase();
+    const mimeMap = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+    };
+    instance.image = {
+      inlineData: {
+        mimeType: mimeMap[ext] || "image/jpeg",
+        data: base64Data,
+      },
+    };
+  }
+
+  const body = { instances: [instance] };
+  if (Object.keys(parameters).length > 0) {
+    body.parameters = parameters;
+  }
+
+  const initResponse = await fetch(
+    `${BASE_URL}/models/${modelName}:predictLongRunning`,
+    {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!initResponse.ok) {
+    const errorText = await initResponse.text();
+    throw new Error(`Veo API error ${initResponse.status}: ${errorText}`);
+  }
+
+  const operation = await initResponse.json();
+  const operationName = operation.name;
+
+  // Poll until done (max 6 minutes)
+  const maxWaitMs = 360000;
+  const pollInterval = 10000;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitMs) {
+    await new Promise((r) => setTimeout(r, pollInterval));
+
+    const pollResponse = await fetch(`${BASE_URL}/${operationName}`, {
+      headers: { "x-goog-api-key": apiKey },
+    });
+
+    if (!pollResponse.ok) {
+      throw new Error(`Poll error: ${pollResponse.status}`);
+    }
+
+    const status = await pollResponse.json();
+
+    if (status.error) {
+      throw new Error(
+        `Video generation failed: ${status.error.message || JSON.stringify(status.error)}`
+      );
+    }
+
+    if (status.done) {
+      const videoUri =
+        status.response?.generateVideoResponse?.generatedSamples?.[0]?.video
+          ?.uri;
+      if (!videoUri) {
+        throw new Error("Video generation completed but no video URI found");
+      }
+
+      const videoResponse = await fetch(videoUri, {
+        headers: { "x-goog-api-key": apiKey },
+      });
+
+      if (!videoResponse.ok) {
+        throw new Error(
+          `Failed to download video: ${videoResponse.status}`
+        );
+      }
+
+      const videoBuffer = await videoResponse.arrayBuffer();
+      return Buffer.from(videoBuffer).toString("base64");
+    }
+  }
+
+  throw new Error("Video generation timed out after 6 minutes");
+}
+
+async function generateWithOmniVideo(
+  prompt,
+  config,
+  imageParts,
+  previousInteractionId
+) {
+  const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+
+  let input;
+  if (imageParts && imageParts.length > 0) {
+    input = [...imageParts, { type: "text", text: prompt }];
+  } else {
+    input = prompt;
+  }
+
+  const body = { model: MODELS.OMNI_FLASH, input };
+
+  if (previousInteractionId) {
+    body.previous_interaction_id = previousInteractionId;
+  }
+
+  const responseFormat = { type: "video" };
+  if (config.aspectRatio) responseFormat.aspect_ratio = config.aspectRatio;
+  if (config.resolution) responseFormat.resolution = config.resolution;
+  body.response_format = responseFormat;
+
+  const response = await fetch(
+    `${BASE_URL}/interactions?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Omni API error ${response.status}: ${errorText}`);
+  }
+
+  const result = await response.json();
+
+  // SDK-style output_video 먼저 시도, 없으면 steps 배열에서 추출 (REST 방식)
+  let videoData = result.output_video?.data;
+  if (!videoData) {
+    const modelOutput = result.steps?.find((s) => s.type === "model_output");
+    const videoContent = modelOutput?.content?.find(
+      (c) => c.type === "video"
+    );
+    videoData = videoContent?.data;
+  }
+
+  if (!videoData) {
+    throw new Error(
+      `No video data in response. Status: ${result.status}. Full response: ${JSON.stringify(result).slice(0, 500)}`
+    );
+  }
+
+  return { data: videoData, interactionId: result.id };
+}
+
 async function generateWithImagen(prompt, sampleCount, aspectRatio) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODELS.IMAGEN_4}:predict`,
@@ -249,7 +423,7 @@ async function generateWithImagen(prompt, sampleCount, aspectRatio) {
 const server = new Server(
   {
     name: "gemini-server",
-    version: "2.0.0",
+    version: "2.1.0",
   },
   {
     capabilities: {
@@ -550,6 +724,97 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["prompt", "imagePath"],
         },
       },
+
+      // --- 영상 생성 도구 ---
+      {
+        name: "generate_video",
+        description:
+          "Generate high-quality videos using Veo 3.1 with native audio. Supports text-to-video and image-to-video. Videos are 4-8 seconds long. Note: this is a long-running operation (typically 1-6 minutes). Generated videos include SynthID watermark.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description:
+                "Text description of the video to generate (in English). Include subject, action, style, camera motion, and audio cues for best results.",
+            },
+            model: {
+              type: "string",
+              description:
+                "Veo model variant: 'veo-3.1' (default, best quality), 'veo-3.1-fast' (optimized for speed), 'veo-3.1-lite' (fastest, no 4k support)",
+              enum: ["veo-3.1", "veo-3.1-fast", "veo-3.1-lite"],
+              default: "veo-3.1",
+            },
+            aspectRatio: {
+              type: "string",
+              description:
+                "Video aspect ratio: '16:9' (landscape, default) or '9:16' (portrait)",
+              enum: ["16:9", "9:16"],
+              default: "16:9",
+            },
+            resolution: {
+              type: "string",
+              description:
+                "Output resolution. '720p' (default), '1080p' (8s duration only), '4k' (8s duration only, not available for lite model)",
+              enum: ["720p", "1080p", "4k"],
+              default: "720p",
+            },
+            durationSeconds: {
+              type: "number",
+              description:
+                "Video duration: 4, 6, or 8 seconds. 1080p and 4k require 8s.",
+              enum: [4, 6, 8],
+              default: 8,
+            },
+            imagePath: {
+              type: "string",
+              description:
+                "Optional: absolute path to an image file to use as the first frame (image-to-video mode)",
+            },
+          },
+          required: ["prompt"],
+        },
+      },
+      {
+        name: "generate_video_omni",
+        description:
+          "Generate or edit videos using Gemini Omni Flash. Faster than Veo with conversational editing support. Use previousInteractionId for stateful multi-turn video editing (e.g., generate then refine). Supports text-to-video and image-to-video.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            prompt: {
+              type: "string",
+              description:
+                "Text description for new video, or editing instructions for existing video (in English)",
+            },
+            aspectRatio: {
+              type: "string",
+              description:
+                "Video aspect ratio: '16:9' (landscape, default) or '9:16' (portrait)",
+              enum: ["16:9", "9:16"],
+              default: "16:9",
+            },
+            resolution: {
+              type: "string",
+              description:
+                "Output resolution: '360p', '720p' (default), or '1080p'",
+              enum: ["360p", "720p", "1080p"],
+              default: "720p",
+            },
+            imagePath: {
+              type: "string",
+              description:
+                "Optional: absolute path to an image file to use as reference or starting frame",
+            },
+            previousInteractionId: {
+              type: "string",
+              description:
+                "Optional: interaction ID returned by a previous generate_video_omni call, for stateful video editing",
+            },
+          },
+          required: ["prompt"],
+        },
+      },
     ],
   };
 });
@@ -825,6 +1090,115 @@ Provide:
       );
     }
 
+    // --- 영상 생성 도구 ---
+
+    if (name === "generate_video") {
+      const {
+        prompt,
+        model = "veo-3.1",
+        aspectRatio = "16:9",
+        resolution = "720p",
+        durationSeconds = 8,
+        imagePath,
+      } = args;
+
+      const modelMap = {
+        "veo-3.1": MODELS.VEO_3_1,
+        "veo-3.1-fast": MODELS.VEO_3_1_FAST,
+        "veo-3.1-lite": MODELS.VEO_3_1_LITE,
+      };
+      const modelName = modelMap[model] || MODELS.VEO_3_1;
+
+      const parameters = { aspectRatio, resolution };
+      if (durationSeconds) {
+        parameters.durationSeconds = String(durationSeconds);
+      }
+
+      let resolvedImagePath;
+      if (imagePath) {
+        resolvedImagePath = imagePath.startsWith("/")
+          ? imagePath
+          : join(__dirname, imagePath);
+        try {
+          await access(resolvedImagePath);
+        } catch {
+          throw new Error(`Image file not found: ${resolvedImagePath}`);
+        }
+      }
+
+      const videoData = await generateWithVeo(
+        prompt,
+        modelName,
+        parameters,
+        resolvedImagePath
+      );
+      const savedPath = await saveVideo(videoData, "veo");
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `[Video - Veo ${model}]\n\nGenerated video for: "${prompt}"\n\nSettings: ${aspectRatio} | ${resolution} | ${durationSeconds}s${resolvedImagePath ? " | image-to-video" : ""}\n\nSaved to:\n- ${savedPath}\n\nNote: Videos include SynthID watermark. Server-side copies expire after 2 days.`,
+          },
+        ],
+      };
+    }
+
+    if (name === "generate_video_omni") {
+      const {
+        prompt,
+        aspectRatio = "16:9",
+        resolution = "720p",
+        imagePath,
+        previousInteractionId,
+      } = args;
+
+      let imageParts;
+      if (imagePath) {
+        const resolvedPath = imagePath.startsWith("/")
+          ? imagePath
+          : join(__dirname, imagePath);
+        try {
+          await access(resolvedPath);
+        } catch {
+          throw new Error(`Image file not found: ${resolvedPath}`);
+        }
+        const imageBuffer = await readFile(resolvedPath);
+        const base64Data = imageBuffer.toString("base64");
+        const ext = resolvedPath.split(".").pop().toLowerCase();
+        const mimeMap = {
+          png: "image/png",
+          jpg: "image/jpeg",
+          jpeg: "image/jpeg",
+          webp: "image/webp",
+        };
+        imageParts = [
+          {
+            type: "image",
+            data: base64Data,
+            mime_type: mimeMap[ext] || "image/jpeg",
+          },
+        ];
+      }
+
+      const { data, interactionId } = await generateWithOmniVideo(
+        prompt,
+        { aspectRatio, resolution },
+        imageParts,
+        previousInteractionId
+      );
+      const savedPath = await saveVideo(data, "omni");
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `[Video - Gemini Omni Flash]\n\n${previousInteractionId ? "Edited" : "Generated"} video for: "${prompt}"\n\nSettings: ${aspectRatio} | ${resolution}${imagePath ? " | image-to-video" : ""}\n\nSaved to:\n- ${savedPath}\n\nInteraction ID: ${interactionId}\n(Pass this as previousInteractionId to continue editing this video)`,
+          },
+        ],
+      };
+    }
+
     throw new Error(`Unknown tool: ${name}`);
   } catch (error) {
     return {
@@ -846,7 +1220,7 @@ Provide:
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Gemini MCP server running (v2.0.0)");
+  console.error("Gemini MCP server running (v2.1.0)");
 }
 
 main().catch((error) => {
