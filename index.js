@@ -202,6 +202,7 @@ async function generateImage(modelName, prompt, config = {}) {
     imageSize,
     thinkingLevel,
     searchGrounding,
+    mimeType,
   } = config;
 
   const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -235,6 +236,7 @@ async function generateImage(modelName, prompt, config = {}) {
   const responseFormat = { type: "image" };
   if (aspectRatio) responseFormat.aspect_ratio = aspectRatio;
   if (imageSize) responseFormat.image_size = imageSize;
+  if (mimeType) responseFormat.mime_type = mimeType;
   body.response_format = responseFormat;
 
   // multi-turn
@@ -722,6 +724,12 @@ Prompt tips:
                 "Google Search grounding: 'web' (brand trends), 'image' (visual references), 'both'. Omit to disable.",
               enum: ["web", "image", "both"],
             },
+            outputFormat: {
+              type: "string",
+              description: "Output image format. PNG (lossless, default) or JPEG (smaller).",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
+            },
           },
           required: ["prompt"],
         },
@@ -813,6 +821,19 @@ Tips:
                 "Google Search grounding: 'web' (text search), 'image' (image search for visual refs), 'both'. Omit to disable.",
               enum: ["web", "image", "both"],
             },
+            rawPrompt: {
+              type: "boolean",
+              description:
+                "Set true to disable the automatic system prompt (style/mood instructions). Sends only your prompt text to the model. Useful for simple styles like pixel art where 'Rich visual detail' instructions interfere.",
+              default: false,
+            },
+            outputFormat: {
+              type: "string",
+              description:
+                "Output image format: 'image/png' (lossless, recommended) or 'image/jpeg' (smaller file). Default: PNG.",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
+            },
           },
           required: ["prompt"],
         },
@@ -885,6 +906,12 @@ Prompt tips:
                 "Google Search grounding: 'web' (real-time data), 'image' (visual refs), 'both'. Use 'web' for live statistics/trends.",
               enum: ["web", "image", "both"],
             },
+            outputFormat: {
+              type: "string",
+              description: "Output image format. PNG (lossless, default) or JPEG.",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
+            },
           },
           required: ["prompt"],
         },
@@ -947,6 +974,12 @@ Prompt tips:
               description:
                 "Google Search grounding: 'web', 'image' (visual refs), 'both'. Omit to disable.",
               enum: ["web", "image", "both"],
+            },
+            outputFormat: {
+              type: "string",
+              description: "Output image format. PNG (lossless, default) or JPEG.",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
             },
           },
           required: ["prompt"],
@@ -1017,6 +1050,12 @@ Prompt tips:
               description:
                 "Google Search grounding: 'web' (trends), 'image' (visual refs), 'both'. Omit to disable.",
               enum: ["web", "image", "both"],
+            },
+            outputFormat: {
+              type: "string",
+              description: "Output image format. PNG (lossless, default) or JPEG.",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
             },
           },
           required: ["prompt"],
@@ -1121,6 +1160,12 @@ Tips:
               description:
                 "Google Search grounding mode: 'web' (text search for real-world context), 'image' (image search for visual references), 'both' (web + image search). Omit to disable.",
               enum: ["web", "image", "both"],
+            },
+            outputFormat: {
+              type: "string",
+              description: "Output image format. PNG (lossless, default) or JPEG.",
+              enum: ["image/png", "image/jpeg"],
+              default: "image/png",
             },
           },
           required: ["prompt"],
@@ -1452,13 +1497,14 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        outputFormat,
       } = args;
 
       const systemPrompt = SYSTEM_PROMPTS.logo(style, brandName, colorScheme);
       const { images, interactionId } = await generateImage(
         MODELS.NANO_BANANA_PRO,
         prompt,
-        { systemPrompt, aspectRatio: "1:1", imageSize, thinkingLevel, searchGrounding }
+        { systemPrompt, aspectRatio: "1:1", imageSize, thinkingLevel, searchGrounding, mimeType: outputFormat }
       );
 
       const savedPaths = await saveImages(images, "logo");
@@ -1482,11 +1528,13 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        rawPrompt = false,
+        outputFormat,
       } = args;
 
       const modelName = model === "lite" ? MODELS.NANO_BANANA_2_LITE : MODELS.NANO_BANANA_2_1;
       const modelLabel = model === "lite" ? "Nano Banana 2 Lite" : "Nano Banana 2.1";
-      const systemPrompt = SYSTEM_PROMPTS.illustration(style, mood);
+      const systemPrompt = rawPrompt ? undefined : SYSTEM_PROMPTS.illustration(style, mood);
 
       const promises = Array.from({ length: numberOfImages }, () =>
         generateImage(modelName, prompt, {
@@ -1495,6 +1543,7 @@ Provide:
           imageSize,
           thinkingLevel,
           searchGrounding,
+          mimeType: outputFormat,
         })
       );
       const results = await Promise.all(promises);
@@ -1520,13 +1569,14 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        outputFormat,
       } = args;
 
       const systemPrompt = SYSTEM_PROMPTS.infographic(type, data);
       const { images, interactionId } = await generateImage(
         MODELS.NANO_BANANA_PRO,
         prompt,
-        { systemPrompt, aspectRatio, imageSize, thinkingLevel, searchGrounding }
+        { systemPrompt, aspectRatio, imageSize, thinkingLevel, searchGrounding, mimeType: outputFormat }
       );
 
       const savedPaths = await saveImages(images, "infographic");
@@ -1548,6 +1598,7 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        outputFormat,
       } = args;
 
       const styleHint = SYSTEM_PROMPTS.photo(style);
@@ -1559,6 +1610,7 @@ Provide:
           imageSize,
           thinkingLevel,
           searchGrounding,
+          mimeType: outputFormat,
         })
       );
       const results = await Promise.all(promises);
@@ -1608,6 +1660,7 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        outputFormat,
       } = args;
 
       const preset = PLATFORM_PRESETS[platform] || PLATFORM_PRESETS.web;
@@ -1617,7 +1670,7 @@ Provide:
       const { images, interactionId } = await generateImage(
         MODELS.NANO_BANANA_PRO,
         prompt,
-        { systemPrompt, aspectRatio: finalRatio, imageSize, thinkingLevel, searchGrounding }
+        { systemPrompt, aspectRatio: finalRatio, imageSize, thinkingLevel, searchGrounding, mimeType: outputFormat }
       );
 
       const savedPaths = await saveImages(images, "banner");
@@ -1642,6 +1695,7 @@ Provide:
         imageSize,
         thinkingLevel,
         searchGrounding,
+        outputFormat,
       } = args;
 
       const modelName = model === "pro" ? MODELS.NANO_BANANA_PRO : MODELS.NANO_BANANA_2_1;
@@ -1670,6 +1724,7 @@ Provide:
           imageSize,
           thinkingLevel,
           searchGrounding,
+          mimeType: outputFormat,
         }
       );
 
